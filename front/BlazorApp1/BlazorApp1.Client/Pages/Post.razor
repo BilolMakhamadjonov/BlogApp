@@ -1,0 +1,41 @@
+﻿@page "/post"
+@inject HttpClient Http
+@inject IPostService PostService
+
+<h3>Post Yaratish</h3>
+
+@* <div>
+    <input @bind="newPost.Title" placeholder="Sarlavha kiriting..." />
+</div>
+<div>
+    <textarea @bind="newPost.Content" placeholder="Post matnini kiriting..." rows="4"></textarea>
+</div>
+<button @onclick="CreatePost">Yuborish</button>
+
+<ul>
+    @foreach (var post in posts)
+    {
+        <li><strong>@post.Title</strong>: @post.Content</li>
+    }
+</ul>
+
+@code {
+    private PostCreateModel newPost = new();
+    private List<PostCreateModel> posts = new();
+
+    private async Task CreatePost()
+    {
+        if (string.IsNullOrWhiteSpace(newPost.Title) || string.IsNullOrWhiteSpace(newPost.Content))
+            return;
+
+        await PostService.AddPostAsync(newPost);
+        //posts.Add(newPost);
+        newPost = new PostCreateModel(); // Inputni tozalash
+    }
+} *@
+
+<MudFab Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" />
+<MudFab Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Edit" />
+<MudFab Color="Color.Tertiary" StartIcon="@Icons.Material.Filled.ShoppingCart" DropShadow="false" />
+<MudFab StartIcon="@Icons.Material.Filled.Bookmark" Label="Bookmark" />
+<MudFab StartIcon="@Icons.Material.Filled.Save" Disabled="true" />

@@ -24,4 +24,10 @@ public class ReactionRepo : IReactionRepo
         _context.Reactions.Add(reaction);
         await _context.SaveChangesAsync();
     }
+
+    public async Task UpdateAsync(Reaction reaction)
+    {
+        _context.Reactions.Update(reaction);
+        await _context.SaveChangesAsync();
+    }
 }

@@ -1,70 +1,54 @@
-﻿using Blog.Application.Models.Comment;
+﻿using AutoMapper;
+using Blog.Application.Models.Comment;
 using Blog.Core;
-using Blog.DataAccess;
-using Microsoft.EntityFrameworkCore;
+using Blog.DataAccess.Repositories;
 
 namespace Blog.Application.Service;
 
 public class CommentService : ICommentService
 {
-    private readonly AppDbContext _context;
-    public CommentService(AppDbContext context) => _context = context;
+    private readonly ICommentRepository _commentRepository;
+    private readonly IMapper _mapper;
 
-    public async Task<List<CommentResponseModel>> GetAllCommentsAsync()
+    public CommentService(ICommentRepository commentRepository, IMapper mapper)
     {
-        return await _context.Comments
-            .Select(c => new CommentResponseModel
-            {
-                Id = c.Id,
-                PostId = c.PostId,
-                Author = c.Author,
-                Text = c.Text,
-                CreatedAt = c.CreatedAt
-            }).ToListAsync();
+        _commentRepository = commentRepository;
+        _mapper = mapper;
     }
 
-    public async Task<CommentResponseModel?> GetCommentByIdAsync(int id)
+    public async Task<List<CommentResponseModel>> GetByPostIdAsync(int postId)
     {
-        var comment = await _context.Comments.FindAsync(id);
-        return comment == null ? null : new CommentResponseModel
+        var comments = await _commentRepository.GetByPostIdAsync(postId);
+        return _mapper.Map<List<CommentResponseModel>>(comments);
+    }
+
+    public async Task<CommentResponseModel?> GetByIdAsync(int id)
+    {
+        var comment = await _commentRepository.GetByIdAsync(id);
+        return comment != null ? _mapper.Map<CommentResponseModel>(comment) : null;
+    }
+
+    public async Task AddAsync(CommentCreateModel model)
+    {
+        var comment = _mapper.Map<Comment>(model);
+        comment.CreatedAt = DateTime.UtcNow;
+        await _commentRepository.AddAsync(comment);
+    }
+
+    public async Task UpdateAsync(CommentUpdateModel model)
+    {
+        var existingComment = await _commentRepository.GetByIdAsync(model.Id);
+        if (existingComment == null)
         {
-            Id = comment.Id,
-            PostId = comment.PostId,
-            Author = comment.Author,
-            Text = comment.Text,
-            CreatedAt = comment.CreatedAt
-        };
-    }
-
-    public async Task AddCommentAsync(CommentCreateModel model)
-    {
-        var comment = new Comment
-        {
-            PostId = model.PostId,
-            Author = model.Author,
-            Text = model.Text
-        };
-        _context.Comments.Add(comment);
-        await _context.SaveChangesAsync();
-    }
-
-    public async Task UpdateCommentAsync(CommentUpdateModel model)
-    {
-        var comment = await _context.Comments.FindAsync(model.Id);
-        if (comment == null) return;
-
-        comment.Author = model.Author;
-        comment.Text = model.Text;
-        await _context.SaveChangesAsync();
-    }
-
-    public async Task DeleteCommentAsync(int id)
-    {
-        var comment = await _context.Comments.FindAsync(id);
-        if (comment != null)
-        {
-            _context.Comments.Remove(comment);
-            await _context.SaveChangesAsync();
+            throw new Exception("Comment not found");
         }
+
+        _mapper.Map(model, existingComment);
+        await _commentRepository.UpdateAsync(existingComment);
+    }
+
+    public async Task DeleteAsync(int id)
+    {
+        await _commentRepository.DeleteAsync(id);
     }
 }

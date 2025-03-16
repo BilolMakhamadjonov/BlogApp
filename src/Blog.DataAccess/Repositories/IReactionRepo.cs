@@ -6,4 +6,5 @@ public interface IReactionRepo
 {
     Task<List<Reaction>> GetByPostIdAsync(int postId);
     Task AddAsync(Reaction reaction);
+    Task UpdateAsync(Reaction reaction);
 }

@@ -1,12 +1,13 @@
 ﻿using Blog.Application.Models.Post;
+using Blog.Core;
 
 namespace Blog.Application.Service;
 
 public interface IPostService
 {
-    Task<List<PostResponseModel>> GetAllPostsAsync();
-    Task<PostResponseModel?> GetPostByIdAsync(int id);
-    Task AddPostAsync(PostCreateModel model);
-    Task UpdatePostAsync(PostUpdateModel model);
-    Task DeletePostAsync(int id);
+    Task<List<PostResponseModel>> GetAllAsync();
+    Task<PostResponseModel?> GetByIdAsync(int id);
+    Task AddAsync(PostCreateModel post);
+    Task UpdateAsync(PostUpdateModel post);
+    Task DeleteAsync(int id);
 }

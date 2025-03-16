@@ -1,4 +1,5 @@
 using Blog.Application;
+using Blog.Application.Mapping;
 using Blog.DataAccess;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,6 +10,8 @@ var configuration = builder.Configuration;
 builder.Services.AddDataAccess(configuration);
 
 builder.Services.AddApplicationServices(configuration);
+
+builder.Services.AddAutoMapper(typeof(CommentProfile), typeof(PostProfile), typeof(ReactionProfile));
 
 
 builder.Services.AddApplicationServices(builder.Configuration);

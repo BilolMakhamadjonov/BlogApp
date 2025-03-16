@@ -9,37 +9,48 @@ namespace Blog.API.Controllers;
 public class CommentController : ControllerBase
 {
     private readonly ICommentService _commentService;
-    public CommentController(ICommentService commentService) => _commentService = commentService;
 
-    [HttpGet]
-    public async Task<IActionResult> GetAll() => Ok(await _commentService.GetAllCommentsAsync());
+    public CommentController(ICommentService commentService)
+    {
+        _commentService = commentService;
+    }
+
+    [HttpGet("post/{postId}")]
+    public async Task<IActionResult> GetByPostId(int postId)
+    {
+        var comments = await _commentService.GetByPostIdAsync(postId);
+        return Ok(comments);
+    }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
-        var comment = await _commentService.GetCommentByIdAsync(id);
-        return comment == null ? NotFound() : Ok(comment);
+        var comment = await _commentService.GetByIdAsync(id);
+        if (comment == null)
+        {
+            return NotFound();
+        }
+        return Ok(comment);
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CommentCreateModel model)
+    public async Task<IActionResult> Add(CommentCreateModel model)
     {
-        await _commentService.AddCommentAsync(model);
+        await _commentService.AddAsync(model);
         return Ok();
     }
 
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, [FromBody] CommentUpdateModel model)
+    [HttpPut]
+    public async Task<IActionResult> Update(CommentUpdateModel model)
     {
-        if (id != model.Id) return BadRequest();
-        await _commentService.UpdateCommentAsync(model);
-        return NoContent();
+        await _commentService.UpdateAsync(model);
+        return Ok();
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-        await _commentService.DeleteCommentAsync(id);
-        return NoContent();
+        await _commentService.DeleteAsync(id);
+        return Ok();
     }
 }

@@ -1,67 +1,54 @@
-﻿using Blog.Application.Models.Post;
+﻿using AutoMapper;
+using Blog.Application.Models.Post;
 using Blog.Core;
-using Blog.DataAccess;
-using Microsoft.EntityFrameworkCore;
+using Blog.DataAccess.Repositories;
 
 namespace Blog.Application.Service;
 
 public class PostService : IPostService
 {
-    private readonly AppDbContext _context;
-    public PostService(AppDbContext context) => _context = context;
+    private readonly IPostRepository _postRepository;
+    private readonly IMapper _mapper;
 
-    public async Task<List<PostResponseModel>> GetAllPostsAsync()
+    public PostService(IPostRepository postRepository, IMapper mapper)
     {
-        return await _context.Posts
-            .Select(p => new PostResponseModel
-            {
-                Id = p.Id,
-                Title = p.Title,
-                Content = p.Content,
-                CreatedAt = p.CreatedAt
-            }).ToListAsync();
+        _postRepository = postRepository;
+        _mapper = mapper;
     }
 
-    public async Task<PostResponseModel?> GetPostByIdAsync(int id)
+    public async Task<List<PostResponseModel>> GetAllAsync()
     {
-        var post = await _context.Posts.FindAsync(id);
-        return post == null ? null : new PostResponseModel
+        var posts = await _postRepository.GetAllAsync();
+        return _mapper.Map<List<PostResponseModel>>(posts);
+    }
+
+    public async Task<PostResponseModel?> GetByIdAsync(int id)
+    {
+        var post = await _postRepository.GetByIdAsync(id);
+        return post != null ? _mapper.Map<PostResponseModel>(post) : null;
+    }
+
+    public async Task AddAsync(PostCreateModel model)
+    {
+        var post = _mapper.Map<Post>(model);
+        post.CreatedAt = DateTime.UtcNow;
+        await _postRepository.AddAsync(post);
+    }
+
+    public async Task UpdateAsync(PostUpdateModel model)
+    {
+        var existingPost = await _postRepository.GetByIdAsync(model.Id);
+        if (existingPost == null)
         {
-            Id = post.Id,
-            Title = post.Title,
-            Content = post.Content,
-            CreatedAt = post.CreatedAt
-        };
-    }
-
-    public async Task AddPostAsync(PostCreateModel model)
-    {
-        var post = new Post
-        {
-            Title = model.Title,
-            Content = model.Content
-        };
-        _context.Posts.Add(post);
-        await _context.SaveChangesAsync();
-    }
-
-    public async Task UpdatePostAsync(PostUpdateModel model)
-    {
-        var post = await _context.Posts.FindAsync(model.Id);
-        if (post == null) return;
-
-        post.Title = model.Title;
-        post.Content = model.Content;
-        await _context.SaveChangesAsync();
-    }
-
-    public async Task DeletePostAsync(int id)
-    {
-        var post = await _context.Posts.FindAsync(id);
-        if (post != null)
-        {
-            _context.Posts.Remove(post);
-            await _context.SaveChangesAsync();
+            throw new Exception("Post not found");
         }
+
+        _mapper.Map(model, existingPost);
+        await _postRepository.UpdateAsync(existingPost);
+    }
+
+    public async Task DeleteAsync(int id)
+    {
+        await _postRepository.DeleteAsync(id);
     }
 }

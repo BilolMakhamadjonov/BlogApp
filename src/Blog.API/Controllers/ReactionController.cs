@@ -18,13 +18,21 @@ public class ReactionController : ControllerBase
     [HttpGet("post/{postId}")]
     public async Task<IActionResult> GetByPostId(int postId)
     {
-        return Ok(await _reactionService.GetReactionsByPostIdAsync(postId));
+        var reactions = await _reactionService.GetByPostIdAsync(postId);
+        return Ok(reactions);
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] ReactionCreateModel model)
+    public async Task<IActionResult> Add(ReactionCreateModel model)
     {
-        await _reactionService.AddReactionAsync(model);
+        await _reactionService.AddAsync(model);
+        return Ok();
+    }
+
+    [HttpPut]
+    public async Task<IActionResult> Update(ReactionUpdateModel model)
+    {
+        await _reactionService.UpdateAsync(model);
         return Ok();
     }
 }
